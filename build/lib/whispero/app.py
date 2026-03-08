@@ -221,7 +221,14 @@ def main() -> None:
 
     tray = create_tray_icon()
     if tray:
-        tray.run()
+        # Run tray in a background thread so Ctrl+C works
+        tray_thread = threading.Thread(target=tray.run, daemon=True)
+        tray_thread.start()
+        try:
+            tray_thread.join()
+        except KeyboardInterrupt:
+            tray.stop()
+            print("\n👋 Bye!")
     else:
         try:
             listener.join()

@@ -13,6 +13,12 @@ Local mode is the default. No server is required.
 On first run, WhisperO downloads a speech model to `~/.whispero/models/`.
 `large-v3` is the default model and is about 3 GB.
 
+## Demo
+
+![Dictation demo](assets/demo.gif)
+
+![Tray menu and custom dictionary](assets/tray.gif)
+
 ## Features
 
 - Cross-platform: macOS, Windows, Linux
