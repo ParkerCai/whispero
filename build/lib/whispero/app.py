@@ -12,7 +12,7 @@ from pynput import keyboard
 
 from .audio import RecorderState, start_recording, stop_recording
 from .clipboard import paste_text
-from .config import load_config
+from .config import load_config, save_config_value
 from .dictionary import load_dictionary, open_dictionary
 from .sounds import play_sound
 from .transcribe import transcribe
@@ -129,6 +129,8 @@ def create_tray_icon():
         draw.ellipse([26, 38, 38, 50], fill="#2D2D2D")  # open mouth
         return img
 
+    MODELS = ["large-v3", "medium", "small", "base", "tiny"]
+
     def on_toggle(icon, item):
         state.enabled = not state.enabled
         status = "Enabled" if state.enabled else "Disabled"
@@ -141,15 +143,43 @@ def create_tray_icon():
     def on_edit_dict(icon, item):
         open_dictionary()
 
+    def make_model_callback(model_name):
+        def callback(icon, item):
+            if config.get("model") == model_name:
+                return
+            config["model"] = model_name
+            save_config_value("model", model_name)
+            print(f"  🔄 Switching to {model_name}...")
+            if config.get("backend", "local") == "local":
+                try:
+                    from .transcribe import get_model, is_model_cached
+                    if not is_model_cached(model_name):
+                        print(f"  ⏳ Downloading {model_name}...")
+                    get_model(model_name)
+                    print(f"  ✓ {model_name} ready")
+                except Exception as e:
+                    print(f"  ❌ Failed to load {model_name}: {e}")
+        return callback
+
+    def is_current_model(model_name):
+        return lambda item: config.get("model", "large-v3") == model_name
+
     if platform.system() == "Darwin":
         hotkey_label = "Hold ⌃⌘ to dictate"
     else:
         hotkey_label = "Hold Win+Ctrl to dictate"
 
+    model_menu = pystray.Menu(
+        *[pystray.MenuItem(
+            m, make_model_callback(m), checked=is_current_model(m), radio=True
+        ) for m in MODELS]
+    )
+
     menu = pystray.Menu(
         pystray.MenuItem(hotkey_label, None, enabled=False),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem(lambda item: "✓ Enabled" if state.enabled else "  Disabled", on_toggle),
+        pystray.MenuItem("Select Model", model_menu),
         pystray.MenuItem("Edit Dictionary", on_edit_dict),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Quit", on_quit),
@@ -221,14 +251,7 @@ def main() -> None:
 
     tray = create_tray_icon()
     if tray:
-        # Run tray in a background thread so Ctrl+C works
-        tray_thread = threading.Thread(target=tray.run, daemon=True)
-        tray_thread.start()
-        try:
-            tray_thread.join()
-        except KeyboardInterrupt:
-            tray.stop()
-            print("\n👋 Bye!")
+        tray.run()
     else:
         try:
             listener.join()

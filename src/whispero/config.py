@@ -76,6 +76,14 @@ def _apply_env(config: dict[str, Any]) -> dict[str, Any]:
     return updated
 
 
+def save_config_value(key: str, value: Any) -> None:
+    """Update a single key in the user config file, preserving other settings."""
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    file_config = _load_config_file()
+    file_config[key] = value
+    CONFIG_PATH.write_text(json.dumps(file_config, indent=2) + "\n", encoding="utf-8")
+
+
 def load_config() -> dict[str, Any]:
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     file_config = _load_config_file()
