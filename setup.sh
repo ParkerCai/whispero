@@ -37,7 +37,18 @@ esac
 ok "Platform: $PLATFORM"
 
 # --- Check Python ---
+# On macOS, prefer 3.12 (pyobjc not yet compatible with 3.13+)
 find_python() {
+  # Check specific versions first (prefer 3.12 on Mac for pyobjc compatibility)
+  if [ "$PLATFORM" = "mac" ]; then
+    for cmd in python3.12 python3.11 python3.10; do
+      if command -v "$cmd" &>/dev/null; then
+        echo "$cmd"
+        return 0
+      fi
+    done
+  fi
+  # Fall back to generic python3/python
   for cmd in python3 python; do
     if command -v "$cmd" &>/dev/null; then
       local ver
@@ -46,6 +57,18 @@ find_python() {
       major=$(echo "$ver" | cut -d. -f1)
       minor=$(echo "$ver" | cut -d. -f2)
       if [ "$major" -ge 3 ] && [ "$minor" -ge 10 ]; then
+        # On Mac, warn if using 3.13+ (pyobjc incompatible)
+        if [ "$PLATFORM" = "mac" ] && [ "$minor" -ge 13 ]; then
+          warn "Python $ver detected — pyobjc may not install (needs ≤3.12)"
+          warn "Installing Python 3.12 for full compatibility..."
+          if command -v brew &>/dev/null; then
+            brew install python@3.12
+            if command -v python3.12 &>/dev/null; then
+              echo "python3.12"
+              return 0
+            fi
+          fi
+        fi
         echo "$cmd"
         return 0
       fi
@@ -59,7 +82,7 @@ if PYTHON=$(find_python); then
   ok "Python: $($PYTHON --version)"
 else
   if [ "$PLATFORM" = "mac" ]; then
-    info "Python 3.10+ not found. Installing via Homebrew..."
+    info "Python not found. Installing Python 3.12 via Homebrew..."
     if ! command -v brew &>/dev/null; then
       info "Homebrew not found. Installing Homebrew first..."
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"

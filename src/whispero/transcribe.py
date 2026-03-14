@@ -151,7 +151,14 @@ def transcribe(
 
     if backend_name == "server":
         server_url = server or cfg.get("server", "http://localhost:8080")
-        return transcribe_server(audio_buf=audio_buf, server=server_url, prompt=prompt)
+        result = transcribe_server(audio_buf=audio_buf, server=server_url, prompt=prompt)
+        if result is not None:
+            return result
+        # Server unreachable — fall back to local
+        print("  ⚡ Server unavailable, falling back to local...")
+        audio_buf.seek(0)
+        resolved_model = model_size or cfg.get("model", "large-v3")
+        return transcribe_local(audio_buf=audio_buf, model_size=resolved_model, prompt=prompt)
 
     resolved_model = model_size or cfg.get("model", "large-v3")
     return transcribe_local(audio_buf=audio_buf, model_size=resolved_model, prompt=prompt)

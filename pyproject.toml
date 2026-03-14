@@ -20,8 +20,7 @@ dependencies = [
   "pystray",
   "Pillow",
   "pywin32; platform_system == 'Windows'",
-  "pyobjc-framework-AppKit; platform_system == 'Darwin'",
-  "pyobjc-framework-Foundation; platform_system == 'Darwin'",
+  "pyobjc-framework-Cocoa; platform_system == 'Darwin'",
 ]
 
 [project.urls]

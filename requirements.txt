@@ -10,8 +10,10 @@ Pillow
 
 # Optional platform clipboard support
 pywin32; platform_system == "Windows"
-pyobjc-framework-AppKit; platform_system == "Darwin"
-pyobjc-framework-Foundation; platform_system == "Darwin"
+# pyobjc (optional, for full clipboard save/restore on macOS)
+# pip install whispero[macos]
+# pyobjc-framework-AppKit; platform_system == "Darwin"
+# pyobjc-framework-Foundation; platform_system == "Darwin"
 
 # Build (only needed for packaging .exe/.app)
 # pip install pyinstaller
